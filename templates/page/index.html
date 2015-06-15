@@ -1,0 +1,350 @@
+{% extends "layout/base.html" %}
+{% block title %}Quassel Mobile{% endblock %}
+{% block meta %}
+  {{ super() }}
+  <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" sizes="16x16">
+  <link rel="shortcut icon" href="/favicon192.png" type="image/png" sizes="192x192">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="application-name" content="QuasselMobile">
+{% endblock %}
+{% block css %}
+  <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.2.0/css/bootstrap.min.css">
+  <style>
+
+    body {
+      padding-top: 50px;
+    }
+    .navbar {
+      margin-bottom: 0;
+    }
+    @media only screen and (max-width : 767px) {
+      .navbar-nav {
+        margin: 5px -7.5px;
+      }
+    }
+    @media only screen and (min-width : 768px) {
+      .navbar-nav {
+        float: none;
+      }
+    }
+    .navbar-nav>li {
+      float: left;
+    }
+    #networks {
+
+    }
+    .network {
+
+    }
+    .network .buffers {
+      margin-left: 1em;
+    }
+    .buffer {
+
+    }
+    @media only screen and (max-width : 767px) {
+      #main-view[data-view="networks"] #messages-container { display: none; }
+      #main-view[data-view="messages"] #networks-container { display: none; }
+    }
+    /*@media only screen and (min-width : 768px){*/
+      .view {
+        height: calc(100vh - 50px);
+        overflow-y: scroll;
+      }
+    /*}*/
+
+    @media only screen and (max-width : 767px) {
+      .message {
+        margin-bottom: .75em;
+      }
+    }
+    @media only screen and (min-width : 768px) {
+      #messages {
+        display: table;
+      }
+      .message {
+        display: table-row;
+      }
+      .message > span {
+        display: table-cell;
+      }
+    }
+    .message .timestamp,
+    .message .sender {
+      white-space: nowrap;
+      padding-right: 10px;
+    }
+
+    .message .contents {
+      word-break: break-word;
+    }
+
+    .list {
+
+    }
+    .list .item {
+      height: 36px;
+    }
+
+    ::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+      border-radius: 0;
+      transition: box-shadow 0;
+      box-shadow: none;
+    }
+
+    ::-webkit-scrollbar-track:hover {
+      background: #161616;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background-color: #333;
+      border-radius: 2px;
+      box-shadow: none;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background-color: #444;
+    }
+
+    #messages-container::-webkit-scrollbar-track,
+    #messages-container::-webkit-scrollbar-track:hover {
+      background: transparent;
+    }
+
+    #messages-container::-webkit-scrollbar-thumb,
+    #messages-container::-webkit-scrollbar-thumb:hover {
+      background-color: #073642;
+    }
+
+    body {
+      background: #111;
+      color: #eee;
+    }
+    button.item {
+      width: 100%;
+      display: block;
+      background: transparent;
+      border: none;
+      text-align: left;
+    }
+
+    .network .name,
+    .buffer .name {
+      line-height: 36px;
+      font-family: Consolas;
+      font-size: 18px;
+    }
+    .buffer.item {
+      color: #ddd;
+      background: #181818;
+    }
+    .buffer.item:hover {
+      color: #eee;
+      background: #1a1a1a;
+    }
+    .buffer.item.active {
+      border-right: 3px solid #336699;
+    }
+    .item + .item {
+      border-top: 1px solid #080808;
+    }
+    #messages-container {
+      background-color: #00212A;
+    }
+    #messages {
+      font-family: consolas;
+    }
+    .message[data-type="1"] {      color: #839496; }
+    .message[data-type="2"] {      color: #93a1a1; }
+    .message[data-type="4"] {      color: #93a1a1; }
+    .message[data-type="8"] {      color: #586e75; }
+    .message[data-type="16"] {     color: #586e75; }
+    .message[data-type="32"] {     color: #586e75; }
+    .message[data-type="64"] {     color: #586e75; }
+    .message[data-type="128"] {    color: #586e75; }
+    .message[data-type="256"] {    color: #586e75; }
+    .message[data-type="512"] {    color: #586e75; }
+    .message[data-type="1024"] {   color: #93a1a1; }
+    .message[data-type="2048"] {   color: #93a1a1; }
+    .message[data-type="4096"] {   color: #dc322f; }
+    .message[data-type="8192"] {   color: #93a1a1; }
+    .message[data-type="16384"] {  color: #b58900; }
+    .message[data-type="32768"] {  color: #586e75; }
+    .message[data-type="65536"] {  color: #586e75; }
+    .message[data-type="131072"] { color: #586e75; }
+
+    .message .sender[data-hash="0"] {  color: #B58900; }
+    .message .sender[data-hash="1"] {  color: #CB4B16; }
+    .message .sender[data-hash="2"] {  color: #DC322f; }
+    .message .sender[data-hash="3"] {  color: #D33682; }
+    .message .sender[data-hash="4"] {  color: #6C71C4; }
+    .message .sender[data-hash="5"] {  color: #268BD2; }
+    .message .sender[data-hash="6"] {  color: #2AA198; }
+    .message .sender[data-hash="7"] {  color: #859900; }
+    .message .sender[data-hash="8"] {  color: #B58900; }
+    .message .sender[data-hash="9"] {  color: #CB4B16; }
+    .message .sender[data-hash="10"] { color: #DC322f; }
+    .message .sender[data-hash="11"] { color: #D33682; }
+    .message .sender[data-hash="12"] { color: #6C71C4; }
+    .message .sender[data-hash="13"] { color: #268BD2; }
+    .message .sender[data-hash="14"] { color: #2AA198; }
+    .message .sender[data-hash="15"] { color: #B58900; }
+
+    .message .timestamp { color: #586e75; }
+  </style>
+  
+{% endblock %}
+{% block body %}
+  <div id="app"></div>
+  {% raw %}
+    <script id="template-app", type="text/reactive">
+      <nav class="navbar navbar-inverse navbar-fixed-top">
+        <div class="container-fluid">
+          <ul class="nav navbar-nav">
+            <li class="{{#if view == 'networks'}}active{{/if}}"><a href="#" id="networks-view-toggle" on-click="setView:'networks'">Network List</a></li>
+            <li class="{{#if view == 'messages'}}active{{/if}}"><a href="#" id="messages-view-toggle" on-click="setView:'messages'">{{currentBufferName}}</a></li>
+            <li class="pull-right"><a href="/logout/">Logout</a></li>
+          </ul>
+        </div>
+      </nav>
+      <div class="container-fluid" id="main-view" data-view="{{view}}">
+        <div class="row">
+          <div class="col-sm-9 view" id="messages-container">
+            <div id="messages">
+            {{#each messages}}
+              <div class="message" data-type="{{type}}">
+                <span class="timestamp">{{formatTime(time) }}</span>
+                <span class="sender" data-hash="{{sender.hash}}">{{sender.name}}</span>
+                <span class="contents">{{message}}</span>
+              </div>
+            {{/each}}
+            </div>
+          </div>
+          <div class="col-sm-3 view" id="networks-container">
+            <div id="networks list">
+            {{#each networks}}
+              <div class="network item">
+                <div class="name">{{name}}</div>
+                <div class="buffers list">
+                {{#each buffers}}
+                  <button class="buffer item {{#if currentBufferId == id}}active{{/if}}" on-click="showBuffer:{{this}}">
+                    <div class="name">{{name}}</div>
+                  </button>
+                {{/each}}
+                </div>
+              </div>
+            {{/each}}
+            </div>
+          </div>
+        </div>
+      </div>
+    </script>
+  {% endraw %}
+{% endblock %}
+  
+{% block javascript %}
+  <script type="text/javascript" charset="utf-8" src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+  <script type="text/javascript" charset="utf-8" src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.2.0/js/bootstrap.min.js"></script>
+  <script src='http://cdn.ractivejs.org/latest/ractive.min.js'></script>
+
+  <script type="text/javascript" charset="utf-8">
+    var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    var second = 1000;
+    var minute = second * 60;
+    var hour = minute * 60;
+    var day = hour * 24;
+
+    // Get a formatted date that can be used everywhere a date is displayed
+    var formatDate = function(date) {
+      var current = new Date();
+      var diff = current.getTime() - date.getTime();
+
+      if (diff > day) {
+        if (current.getYear() !== date.getYear()) {
+          var y = d.getFullYear();
+          y = y.toString();
+          y = y.substr(y.length - 2);
+          return months[date.getMonth()] + ' \'' + y;
+        } else {
+          return months[date.getMonth()] + ' ' + date.getDate();
+        }
+      } else if (diff > hour) {
+        return Math.round(diff / hour) + 'h ago';
+      } else if (diff > minute) {
+        return Math.round(diff / minute) + 'm ago';
+      } else {
+        return Math.ceil(diff / second) + 's ago';
+      }
+    };
+
+    var helpers = Ractive.defaults.data;
+    helpers.formatTime = function(timeString){
+        return formatDate(new Date(timeString));
+    }
+
+    var ractive = new Ractive({
+      el: '#app',
+      template: '#template-app',
+      data: {
+        view: 'networks',
+        currentBufferId: null,
+        currentBufferName: '',
+        networks: [],
+        messages: [],
+      },
+    });
+
+    var showBuffer = function(bufferId) {
+      console.log('showBuffer', bufferId);
+      localStorage['selectedBufferId'] = bufferId;
+      ractive.set('currentBufferId', bufferId);
+      ractive.set('currentBufferName', ractive.get('bufferIdToName')[bufferId]);
+      ractive.set('view', 'messages');
+
+      ractive.set('messages', []);
+      $.getJSON('/api/get_messages/', {
+        buffer: bufferId,
+      }, function(data) {
+        ractive.set('messages', data.messages);
+        var e = document.querySelector('#messages-container');
+        e.scrollTop = e.scrollHeight;
+      });
+    };
+    var setState = function(state) {
+      ractive.set('networks', state.networks);
+
+      var bufferIdToName = {};
+      state.networks.forEach(function(network) {
+        network.buffers.forEach(function(buffer){
+          bufferIdToName[buffer.id] = buffer.name;
+        });
+      });
+      ractive.set('bufferIdToName', bufferIdToName);
+    };
+    var init = function() {
+      $.getJSON('/api/get_state/', function(data) {
+        setState(data.state);
+        var selectedBufferId = localStorage['selectedBufferId'];
+        if (selectedBufferId) {
+          selectedBufferId = parseInt(selectedBufferId, 10);
+          showBuffer(selectedBufferId);
+        }
+      });
+    }
+
+    ractive.on('showBuffer', function(event, buffer) {
+      showBuffer(buffer.id);
+    });
+    ractive.on('setView', function(event, viewName) {
+      ractive.set('view', viewName);
+    });
+
+    init();
+  </script>
+{% endblock %}

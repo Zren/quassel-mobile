@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="{% block html_lang %}en{% endblock %}">
+<head>
+  {% block head %}
+  <!-- Meta -->
+  <title>{% block title %}{% endblock %}</title>
+  {% block meta %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="{% block meta_description %}{% endblock %}">
+  {% endblock %}
+  
+  <!-- CSS -->
+  {% block css %}{% endblock %}
+  {% endblock %}
+</head>
+<body class="{% block body_classes %}{% endblock %}"{% block bodytag_extra %}{% endblock %}>
+  {% block body %}{% endblock %}
+  
+  <!-- Javascript -->
+  {% block javascript %}{% endblock %}
+</body>
+</html>
