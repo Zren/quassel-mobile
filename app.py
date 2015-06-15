@@ -114,9 +114,9 @@ def api_get_state():
 
             buffer = b.to_dict()
             network['buffers'].append(buffer)
-        network['buffers'] = sorted(network['buffers'], key=lambda b: b['name'])
+        network['buffers'] = sorted(network['buffers'], key=lambda b: b['name'].lower())
         state['networks'].append(network)
-    state['networks'] = sorted(state['networks'], key=lambda n: n['name'])
+    state['networks'] = sorted(state['networks'], key=lambda n: n['name'].lower())
 
     data = {}
     data['state'] = state
