@@ -221,7 +221,7 @@
           <ul class="nav navbar-nav">
             <li class="{{#if view == 'networks'}}active{{/if}}"><a href="javascript:;" id="networks-view-toggle" on-click="setView:'networks'">Network List</a></li>
             <li class="{{#if view == 'messages'}}active{{/if}}"><a href="javascript:;" id="messages-view-toggle" on-click="setView:'messages'">{{currentBufferName}}</a></li>
-            <li><a href="javascript:;" id="refresh-btn" on-click="refresh">&#8635;</a></li>
+            {{#if currentBufferId}}<li><a href="javascript:;" id="refresh-btn" on-click="refresh">&#8635;</a></li>{{/if}}
             <li class="pull-right"><a href="/logout/">Logout</a></li>
           </ul>
         </div>
@@ -358,7 +358,6 @@
       ractive.set('view', viewName);
     });
     ractive.on('refresh', function(event) {
-      console.log('refresh', ractive.get('currentBufferId'))
       if (ractive.get('currentBufferId')) {
         showBuffer(ractive.get('currentBufferId'));
       }
