@@ -59,6 +59,7 @@ def login():
                 # Login Success
                 session['quasseluser_id'] = quasseluser.userid
                 session['quasseluser_username'] = quasseluser.username
+                session.permanent = True
                 return redirect(url_for('index'))
 
         # Login Failed
