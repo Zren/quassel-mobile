@@ -155,7 +155,9 @@ def api_get_messages():
     messages = query[start:end]
 
     sender_ids = [m.senderid for m in messages]
-    senders = db.query(Sender).filter(Sender.id.in_(sender_ids)).all()
+    senders = []
+    if len(sender_ids) > 0:
+        senders = db.query(Sender).filter(Sender.id.in_(sender_ids)).all()
     sender_names = {s.id: s.name for s in senders}
 
     messages2 = []
