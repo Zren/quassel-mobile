@@ -1,6 +1,8 @@
 # Quassel Mobile
 
-A simple webapp to read quassel's recent logs targeted for mobile use. Written in Python 3.x. Uses flask for the webserver and sqlalchemy to query sql. The clientside currently uses Ractive, jQuery and Bootstrap.
+A simple webapp to read quassel's recent logs, targeted for mobile use.
+
+Written in Python 3.x. Uses flask for the webserver and sqlalchemy to query sql. The clientside currently uses Ractive, jQuery and Bootstrap.
 
 # Screenshots
 
@@ -19,6 +21,11 @@ Then run `run.sh` and open http://localhost:3000/.
 * Port forward so you can visit the website on your phone (since it won't be connected to your LAN).
 * When visiting the site in Chrome (Android), open the menu and click "Add to Home screen" to browse like a regular app without the address bar.
 
+## Features
+
+* Filters out Join/Part/Quits (serverside).
+* Filters out disconnected networks and unjoined buffers (serverside).
+
 ## TODO
 
 * Support QuasselCores that store `quaseluser.password` as something other than SHA1. Currently supports QuasselCore v10.
@@ -29,3 +36,7 @@ Then run `run.sh` and open http://localhost:3000/.
     * During `on('scroll')` check the `scrollTop`. Add a `&before=oldestFetchedMessageId` to the message request, and set `messagesContainer.scrollTop` to `.scrollHeight` after adding the new messages.
 * Geastures using Hammer.js (or it's Ractive equivalent): Swipe up (when at the bottom of the backlog) == reload/fetch more. Swipe right/left (open networks list).
 * Format message types (Eg: message.type == Action senderColumn = `*` contentsColumn = `Zren slaps ____`).
+* Add a buffer.hasUnreadMessage buffer.isHighlighted depending on performance.
+    * Would need to `SELECT COUNT(*) FROM backlog WHERE bufferid == ? AND messageid > ? AND type == Plain/Action` for every visible buffer.
+    * Might make this a seperate API call after `/get_state/` in finished, but would need to refetch the visible buffer list (unless it's cached).
+* Filtering out joins/parts/quits using sql might be causing the performance hit on buffers with a large backlog.
