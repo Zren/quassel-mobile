@@ -30,11 +30,12 @@
     .navbar-nav>li {
       float: left;
     }
-    
-    #messages-view-toggle {
-      max-width: 100px;
-      text-overflow: ellipsis;
-      overflow: hidden;
+    @media only screen and (max-width : 767px) {
+      #messages-view-toggle {
+        max-width: 100px;
+        text-overflow: ellipsis;
+        overflow: hidden;
+      }
     }
 
     #refresh-btn {
@@ -221,7 +222,6 @@
           <ul class="nav navbar-nav">
             <li class="{{#if view == 'networks'}}active{{/if}}"><a href="javascript:;" id="networks-view-toggle" on-click="setView:'networks'">Network List</a></li>
             <li class="{{#if view == 'messages'}}active{{/if}}"><a href="javascript:;" id="messages-view-toggle" on-click="setView:'messages'">{{currentBufferName}}</a></li>
-            {{#if currentBufferId}}<li><a href="javascript:;" id="refresh-btn" on-click="refresh">&#8635;</a></li>{{/if}}
             <li class="pull-right"><a href="/logout/">Logout</a></li>
           </ul>
         </div>
@@ -229,6 +229,11 @@
       <div class="container-fluid" id="main-view" data-view="{{view}}">
         <div class="row">
           <div class="col-sm-9 view" id="messages-container">
+            {{#if messages}}
+              <div>
+                <button id="load-messages-before" class="btn btn-block btn-link"on-click="showMessagesBefore">Load More</button>
+              </div>
+            {{/if}}
             <div id="messages">
             {{#each messages}}
               <div class="message" data-type="{{type}}">
@@ -238,6 +243,11 @@
               </div>
             {{/each}}
             </div>
+            {{#if messages}}
+              <div>
+                <button id="load-messages-after" class="btn btn-block btn-link" on-click="showMessagesAfter">Load More</button>
+              </div>
+            {{/if}}
           </div>
           <div class="col-sm-3 view" id="networks-container">
             <div id="networks list">
@@ -313,6 +323,41 @@
       },
     });
 
+    var showMessagesBefore = function() {
+      var messages = ractive.get('messages');
+      if (messages.length == 0)
+        return;
+
+      $('#load-messages-before').attr('disabled', 'disabled');
+
+      $.getJSON('/api/get_messages/', {
+        buffer: ractive.get('currentBufferId'),
+        before_message_id: messages[0].id,
+      }, function(data) {
+        var e = document.querySelector('#messages-container');
+        var scrollTopBefore = e.scrollTop;
+        var scrollHeightBefore = e.scrollHeight;
+        ractive.set('messages', data.messages.concat(ractive.get('messages')));
+        e.scrollTop = e.scrollHeight - scrollHeightBefore + scrollTopBefore;
+        $('#load-messages-before').attr('disabled', null);
+      });
+    }
+
+    var showMessagesAfter = function() {
+      var messages = ractive.get('messages');
+      if (messages.length == 0)
+        return;
+
+      $('#load-messages-after').attr('disabled', 'disabled');
+      $.getJSON('/api/get_messages/', {
+        buffer: ractive.get('currentBufferId'),
+        after_message_id: messages[messages.length - 1].id,
+      }, function(data) {
+        ractive.set('messages', ractive.get('messages').concat(data.messages));
+        $('#load-messages-after').attr('disabled', null);
+      });
+    }
+
     var showBuffer = function(bufferId) {
       console.log('showBuffer', bufferId);
       localStorage['selectedBufferId'] = bufferId;
@@ -321,6 +366,8 @@
       ractive.set('view', 'messages');
 
       ractive.set('messages', []);
+      $('#load-messages-before').attr('disabled', null);
+      $('#load-messages-after').attr('disabled', null);
       $.getJSON('/api/get_messages/', {
         buffer: bufferId,
       }, function(data) {
@@ -328,6 +375,7 @@
         var e = document.querySelector('#messages-container');
         e.scrollTop = e.scrollHeight;
       });
+
     };
     var setState = function(state) {
       ractive.set('networks', state.networks);
@@ -360,6 +408,16 @@
     ractive.on('refresh', function(event) {
       if (ractive.get('currentBufferId')) {
         showBuffer(ractive.get('currentBufferId'));
+      }
+    });
+    ractive.on('showMessagesBefore', function(event) {
+      if (ractive.get('currentBufferId')) {
+        showMessagesBefore();
+      }
+    });
+    ractive.on('showMessagesAfter', function(event) {
+      if (ractive.get('currentBufferId')) {
+        showMessagesAfter();
       }
     });
 

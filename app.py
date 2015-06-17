@@ -121,8 +121,8 @@ def api_get_state():
 
     data = {}
     data['state'] = state
-    data['networks'] = [n.to_dict() for n in networks]
-    data['buffers'] = [b.to_dict() for b in buffers]
+    # data['networks'] = [n.to_dict() for n in networks]
+    # data['buffers'] = [b.to_dict() for b in buffers]
     return jsonify(data)
 
 @app.route('/api/get_messages/')
@@ -140,7 +140,7 @@ def api_get_messages():
     buffer = query.first()
 
     query = db.query(Message)
-    query = query.filter(Message.bufferid == buffer_id)
+    query = query.filter(Message.bufferid == buffer.id)
     count_all = query.count()
     query = query.filter(Message.type != MessageType.Join)
     query = query.filter(Message.type != MessageType.Part)
@@ -149,11 +149,22 @@ def api_get_messages():
     query = query.filter(Message.type != MessageType.NetsplitQuit)
     query = query.filter(Message.type != MessageType.Mode)
     query = query.filter(Message.type != MessageType.Nick)
-    count_filtered = query.count()
 
-    end = count_filtered
-    start = max(end - 100, 0)
-    messages = query[start:end]
+    if request.args.get('before_message_id'):
+        before_message_id = int(request.args.get('before_message_id'))
+        query = query.filter(Message.id < before_message_id)
+        end = query.count()
+        start = max(end - 100, 0)
+        messages = query[start:end]
+    elif request.args.get('after_message_id'):
+        after_message_id = int(request.args.get('after_message_id'))
+        query = query.filter(Message.id > after_message_id)
+        query = query.limit(100)
+        messages = query.all()
+    else:
+        end = query.count()
+        start = max(end - 100, 0)
+        messages = query[start:end]
 
     sender_ids = [m.senderid for m in messages]
     senders = []
@@ -185,7 +196,6 @@ def api_get_messages():
 
     data = {}
     data['count_all'] = count_all
-    data['count_filtered'] = count_filtered
     data['messages'] = messages2
     return jsonify(data)
 

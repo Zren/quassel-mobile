@@ -33,10 +33,10 @@ Then run `run.sh` and open http://localhost:3000/.
     * A whole new column is added in v12 to specify which encoding.
 * Support SSL?
 * Load more when scrolled to the top.
-    * During `on('scroll')` check the `scrollTop`. Add a `&before=oldestFetchedMessageId` to the message request, and set `messagesContainer.scrollTop` to `.scrollHeight` after adding the new messages.
+    * During `on('scroll')` check the `scrollTop`.
 * Geastures using Hammer.js (or it's Ractive equivalent): Swipe up (when at the bottom of the backlog) == reload/fetch more. Swipe right/left (open networks list).
 * Format message types (Eg: message.type == Action senderColumn = `*` contentsColumn = `Zren slaps ____`).
 * Add a buffer.hasUnreadMessage buffer.isHighlighted depending on performance.
     * Would need to `SELECT COUNT(*) FROM backlog WHERE bufferid == ? AND messageid > ? AND type == Plain/Action` for every visible buffer.
     * Might make this a seperate API call after `/get_state/` in finished, but would need to refetch the visible buffer list (unless it's cached).
-* Filtering out joins/parts/quits using sql might be causing the performance hit on buffers with a large backlog.
+* Find the performance hit on buffers with a large backlog.
