@@ -31,10 +31,15 @@
       float: left;
     }
     @media only screen and (max-width : 767px) {
-      #messages-view-toggle {
+      #channel-view-toggle {
         max-width: 100px;
         text-overflow: ellipsis;
         overflow: hidden;
+      }
+    }
+    @media only screen and (min-width : 768px) {
+      #networks-view-toggle {
+        display: none;
       }
     }
 
@@ -56,8 +61,8 @@
 
     }
     @media only screen and (max-width : 767px) {
-      #main-view[data-view="networks"] #messages-container { display: none; }
-      #main-view[data-view="messages"] #networks-container { display: none; }
+      #main-view[data-view="networks"] #channel-view { display: none; }
+      #main-view[data-view="channel"] #networks-container { display: none; }
     }
     /*@media only screen and (min-width : 768px){*/
       .view {
@@ -65,6 +70,29 @@
         overflow-y: scroll;
       }
     /*}*/
+
+    #input-container {
+      background: #111;
+      color: #eee;
+      margin: 0 -15px;
+      padding: 4px 4px 4px 4px;
+      
+    }
+    #client-input {
+      outline: none;
+      background: #111;
+      background: #181818;
+      color: #eee;
+      border: 0;
+      padding: 4px;
+      line-height: 1.5em;
+      font-family: consolas;
+      width: 100%;
+    }
+    #messages-container {
+      height: calc(100vh - 50px - 1.5em - 16px);
+      overflow-y: scroll;
+    }
 
     @media only screen and (max-width : 767px) {
       .message {
@@ -221,33 +249,38 @@
         <div class="container-fluid">
           <ul class="nav navbar-nav">
             <li class="{{#if view == 'networks'}}active{{/if}}"><a href="javascript:;" id="networks-view-toggle" on-click="setView:'networks'">Network List</a></li>
-            <li class="{{#if view == 'messages'}}active{{/if}}"><a href="javascript:;" id="messages-view-toggle" on-click="setView:'messages'">{{currentBufferName}}</a></li>
+            <li class="{{#if view == 'channel'}}active{{/if}}"><a href="javascript:;" id="channel-view-toggle" on-click="setView:'channel'">{{currentBufferName}}</a></li>
             <li class="pull-right"><a href="/logout/">Logout</a></li>
           </ul>
         </div>
       </nav>
       <div class="container-fluid" id="main-view" data-view="{{view}}">
         <div class="row">
-          <div class="col-sm-9 view" id="messages-container">
-            {{#if messages}}
-              <div>
-                <button id="load-messages-before" class="btn btn-block btn-link"on-click="showMessagesBefore">Load More</button>
+          <div class="col-sm-9 view" id="channel-view">
+            <div class="row container-fluid" id="messages-container">
+              {{#if messages}}
+                <div>
+                  <button id="load-messages-before" class="btn btn-block btn-link" on-click="showMessagesBefore">Load More</button>
+                </div>
+              {{/if}}
+              <div id="messages">
+                {{#each messages}}
+                  <div class="message" data-type="{{type}}" data-id="{{id}}">
+                    <span class="timestamp">{{formatTime(time) }}</span>
+                    <span class="sender" data-hash="{{sender.hash}}">{{sender.name}}</span>
+                    <span class="contents">{{message}}</span>
+                  </div>
+                {{/each}}
               </div>
-            {{/if}}
-            <div id="messages">
-            {{#each messages}}
-              <div class="message" data-type="{{type}}">
-                <span class="timestamp">{{formatTime(time) }}</span>
-                <span class="sender" data-hash="{{sender.hash}}">{{sender.name}}</span>
-                <span class="contents">{{message}}</span>
-              </div>
-            {{/each}}
+              {{#if messages}}
+                <div>
+                  <button id="load-messages-after" class="btn btn-block btn-link" on-click="showMessagesAfter">Load More</button>
+                </div>
+              {{/if}}
             </div>
-            {{#if messages}}
-              <div>
-                <button id="load-messages-after" class="btn btn-block btn-link" on-click="showMessagesAfter">Load More</button>
-              </div>
-            {{/if}}
+            <div class="" id="input-container">
+              <input type="text" id="client-input" on-keydown="clientInputKeydown" value="{{clientInput.value}}" />
+            </div>
           </div>
           <div class="col-sm-3 view" id="networks-container">
             <div id="networks list">
@@ -273,7 +306,7 @@
   
 {% block javascript %}
   <script type="text/javascript" charset="utf-8" src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
-  <script type="text/javascript" charset="utf-8" src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.2.0/js/bootstrap.min.js"></script>
+  <script type="text/javascript" charset="utf-8" src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.5/js/bootstrap.min.js"></script>
   <script src='http://cdn.ractivejs.org/latest/ractive.min.js'></script>
 
   <script type="text/javascript" charset="utf-8">
@@ -290,7 +323,7 @@
 
       if (diff > day) {
         if (current.getYear() !== date.getYear()) {
-          var y = d.getFullYear();
+          var y = date.getFullYear();
           y = y.toString();
           y = y.substr(y.length - 2);
           return months[date.getMonth()] + ' \'' + y;
@@ -320,6 +353,9 @@
         currentBufferName: '',
         networks: [],
         messages: [],
+        clientInput: {
+          value: '',
+        },
       },
     });
 
@@ -358,12 +394,31 @@
       });
     }
 
+    var showMostRecentMessages = function() {
+      var messages = ractive.get('messages');
+      
+      var args = {
+        buffer: ractive.get('currentBufferId'),
+      };
+      if (messages.length > 0) {
+        args['after_message_id'] = messages[messages.length - 1].id;
+      }
+
+      $('#load-messages-after').attr('disabled', 'disabled');
+      $.getJSON('/api/get_messages/', args, function(data) {
+        ractive.set('messages', ractive.get('messages').concat(data.messages));
+        var e = document.querySelector('#messages-container');
+        e.scrollTop = e.scrollHeight;
+        $('#load-messages-after').attr('disabled', null);
+      });
+    }
+
     var showBuffer = function(bufferId) {
       console.log('showBuffer', bufferId);
       localStorage['selectedBufferId'] = bufferId;
       ractive.set('currentBufferId', bufferId);
       ractive.set('currentBufferName', ractive.get('bufferIdToName')[bufferId]);
-      ractive.set('view', 'messages');
+      ractive.set('view', 'channel');
 
       ractive.set('messages', []);
       $('#load-messages-before').attr('disabled', null);
@@ -375,8 +430,19 @@
         var e = document.querySelector('#messages-container');
         e.scrollTop = e.scrollHeight;
       });
-
     };
+
+    var sendInput = function(bufferId, message) {
+      console.log('sendInput', bufferId, message);
+      $.post('/api/send_input/', {
+        buffer: bufferId,
+        message: message,
+      }, function() {
+        console.log('sendInput-post');
+        showMostRecentMessages();
+      });
+    };
+
     var setState = function(state) {
       ractive.set('networks', state.networks);
 
@@ -388,6 +454,24 @@
       });
       ractive.set('bufferIdToName', bufferIdToName);
     };
+
+    var tickerTimerId = -1;
+    var tick = function() {
+      showMostRecentMessages();
+    };
+    var startTicker = function() {
+      if (tickerTimerId === -1) {
+        tickerTimerId = setInterval(tick, 15 * 1000);
+      }
+    };
+    var stopTicker = function() {
+      if (tickerTimerId !== -1) {
+        clearInterval(tickerTimerId);
+        tickerTimerId = -1;
+      }
+    };
+    
+
     var init = function() {
       $.getJSON('/api/get_state/', function(data) {
         setState(data.state);
@@ -396,8 +480,21 @@
           selectedBufferId = parseInt(selectedBufferId, 10);
           showBuffer(selectedBufferId);
         }
+        startTicker();
       });
     }
+
+    var e = document.querySelector('#messages-container');
+    e.addEventListener('scroll', function() {
+      console.log(this.scrollTop, this.scrollHeight);
+      if (this.scrollHeight > 0) {
+        if (this.scrollTop == 0) {
+          showMessagesBefore();
+        } else if (this.scrollTop + this.clientHeight == this.scrollHeight) {
+          showMessagesAfter();
+        }
+      }
+    });
 
     ractive.on('showBuffer', function(event, buffer) {
       showBuffer(buffer.id);
@@ -418,6 +515,16 @@
     ractive.on('showMessagesAfter', function(event) {
       if (ractive.get('currentBufferId')) {
         showMessagesAfter();
+      }
+    });
+    ractive.on('clientInputKeydown', function(event) {
+      console.log(event.original.keyCode);
+      if (event.original.keyCode === 9) { // Tab
+        event.original.preventDefault();
+      } else if (event.original.keyCode === 13) { // Enter
+        sendInput(ractive.get('currentBufferId'), ractive.get('clientInput.value'));
+        ractive.set('clientInput.value', '');
+        event.original.preventDefault();
       }
     });
 

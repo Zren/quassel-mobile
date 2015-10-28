@@ -149,6 +149,7 @@ def api_get_messages():
     query = query.filter(Message.type != MessageType.NetsplitQuit)
     query = query.filter(Message.type != MessageType.Mode)
     query = query.filter(Message.type != MessageType.Nick)
+    query = query.order_by(Message.id)
 
     if request.args.get('before_message_id'):
         before_message_id = int(request.args.get('before_message_id'))
@@ -198,6 +199,25 @@ def api_get_messages():
     data['count_all'] = count_all
     data['messages'] = messages2
     return jsonify(data)
+
+@app.route('/api/send_input/', methods=['GET', 'POST'])
+def api_send_message():
+    if 'quasseluser_id' not in session:
+        return abort(403)
+
+    buffer_id = int(request.values.get('buffer'))
+    message = request.values.get('message')
+
+    import os
+
+    script_path = './../node-quasselclient/sendInput.js'
+    if os.path.exists(script_path):
+        command = ['node', script_path, str(buffer_id), message]
+        import subprocess
+        subprocess.call(command)
+        return '', 200
+    else:
+        return abort(501, 'Write operations using the NodeJS quasselclient not setup.')
 
 
 if __name__ == '__main__':
